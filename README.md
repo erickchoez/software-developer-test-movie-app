@@ -1,66 +1,344 @@
-## Software Developer Design Test "Cinema Booking System"
+# Cinema Booking System — Design Documentation
 
-### Description
+This document contains the deliverables for the **Software Developer Design Test**. The design is presented in English, using **Mermaid** diagrams.
 
-Design a booking system for a major cinema chain in Santander/Spain. The cinema has multiple projection rooms, each with several movie screenings throughout the day. Customers should be able to search for and book seats for a specific movie screening.
+---
 
-### Functional Requirements
+## 1. Entity-Relationship Diagram (ERD)
 
-#### Movie and Screening Management:
+```mermaid
+erDiagram
+    USER ||--o{ BOOKING : places
+    USER {
+        uuid id PK
+        string email
+        string password_hash
+        string full_name
+        string phone
+        datetime created_at
+        datetime updated_at
+    }
 
-* The system must allow for adding, updating, and deleting movies.
-* The system must allow for scheduling screenings for movies in different rooms and at different times.
+    MOVIE ||--o{ SCREENING : "has"
+    MOVIE {
+        uuid id PK
+        string title
+        text description
+        int duration_minutes
+        date release_date
+        string language
+        string genre
+        datetime created_at
+        datetime updated_at
+    }
 
-#### Search and Bookings:
+    ROOM ||--o{ SEAT : contains
+    ROOM ||--o{ SCREENING : hosts
+    ROOM {
+        uuid id PK
+        string name
+        int capacity
+        string layout_type
+        text notes
+    }
 
-* Customers must be able to search for movie screenings by title and date.
-* Customers must be able to view screening details, including available seats.
-* Customers must be able to book specific seats for a movie screening.
-* The system must allow for booking cancellations.
+    SEAT {
+        uuid id PK
+        uuid room_id FK
+        string seat_label
+        int row
+        int number
+        string type
+        boolean accessible
+    }
 
-#### Authentication and User Management:
+    SCREENING ||--o{ BOOKING : "is booked in"
+    SCREENING {
+        uuid id PK
+        uuid movie_id FK
+        uuid room_id FK
+        datetime show_start
+        datetime show_end
+        int base_price_cents
+        enum status
+    }
 
-* Users must be able to register and log in.
-* Users must be able to view and manage their bookings.
+    BOOKING ||--o{ BOOKING_SEAT : "contains"
+    BOOKING ||--o{ PAYMENT : "has"
+    BOOKING {
+        uuid id PK
+        uuid user_id FK
+        uuid screening_id FK
+        enum status
+        int total_amount_cents
+        datetime created_at
+        datetime expires_at
+    }
 
-### Additional Context for Potential Traffic
+    BOOKING_SEAT {
+        uuid id PK
+        uuid booking_id FK
+        uuid seat_id FK
+        int price_cents
+        enum status
+    }
 
-Based on studies and data from the cinema industry, on average, a cinema can receive between 300 and 2,000 people per day on a Friday. Here's a more specific breakdown:
+    PAYMENT {
+        uuid id PK
+        uuid booking_id FK
+        enum method
+        enum status
+        string provider_txn_id
+        int amount_cents
+        datetime created_at
+        datetime updated_at
+    }
+```
 
-#### Cinema in a Large City/Metropolitan Area (Santander/Spain)
+---
 
-* **Average Daily Attendance:** 2,000 - 5,000 people or more, especially with major releases.
+## 2. Class Design
 
-It's expected that 80% of these cinema-goers will purchase tickets online.
+```mermaid
+classDiagram
+    class User {
+        +UUID id
+        +String email
+        +String passwordHash
+        +String fullName
+        +String phone
+        +register()
+        +login()
+        +updateProfile()
+    }
 
-#### Calculation Example
+    class Movie {
+        +UUID id
+        +String title
+        +String description
+        +int durationMinutes
+        +Date releaseDate
+        +create()
+        +update()
+        +delete()
+    }
 
-For a cinema with 10 screens in a medium-sized city, where each screen has 150 seats and 5 screenings per screen on a Friday:
+    class Room {
+        +UUID id
+        +String name
+        +int capacity
+        +Seat[] seats
+        +create()
+        +update()
+        +delete()
+        +getSeatLayout()
+    }
 
-* **Total Screenings:** 10 screens * 5 screenings = 50 screenings
-* **Total Capacity:** 50 screenings * 150 seats = 7,500 seats
-* If the cinema has an average occupancy rate of 60%:
-    * **Estimated Attendance:** 7,500 seats * 60% = 4,500 people
+    class Seat {
+        +UUID id
+        +String seatLabel
+        +int row
+        +int number
+        +SeatType type
+        +boolean accessible
+    }
 
-### Deliverables
+    class Screening {
+        +UUID id
+        +Movie movie
+        +Room room
+        +DateTime showStart
+        +DateTime showEnd
+        +schedule()
+        +reschedule()
+        +cancel()
+        +getAvailableSeats()
+    }
 
-* **Entity Relationship Diagram:** Of all related table to this solution.
-* **Classes Design:** Classes with method descriptions.
-* **Sequences Diagram:** For two use cases "reservation of a movie screening" and "cancel of a reservation"
-* **State Diagram:** For all the main objects in the previous use cases
+    class Booking {
+        +UUID id
+        +User user
+        +Screening screening
+        +BookingSeat[] seats
+        +BookingStatus status
+        +holdSeats()
+        +confirm(paymentInfo)
+        +cancel(reason)
+        +releaseSeats()
+    }
 
-You MUST set up your deliverables using [mermaid](https://mermaid.js.org/intro/) in this README file.
+    class BookingSeat {
+        +UUID id
+        +Seat seat
+        +int priceCents
+        +SeatHoldStatus status
+    }
 
-**Please Note:**
+    class Payment {
+        +UUID id
+        +Booking booking
+        +PaymentMethod method
+        +PaymentStatus status
+        +process()
+        +refund()
+    }
 
-This test does not require a technical implementation at the code level. The solution should only be presented with the requested deliverables.
+    class AuthService {
+        +register(request)
+        +login(request)
+        +verifyToken(token)
+        +logout()
+    }
 
-We'll discuss the solution design further during the interview. We can also work together during the interview to improve the proposed solution.
+    class ScreeningService {
+        +search(title?, date?)
+        +getDetails(screeningId)
+        +getAvailableSeats(screeningId)
+    }
 
-## Final concerns
+    class BookingService {
+        +createBooking(userId, screeningId, seatIds)
+        +confirmBooking(bookingId, paymentInfo)
+        +cancelBooking(bookingId, userId)
+        +autoExpireHolds()
+    }
 
-When delivering the solution, please keep in mind the following practices:
+    class PaymentGateway {
+        +createPayment(amount, method, metadata)
+        +capture(paymentId)
+        +refund(paymentId, amount)
+    }
 
-* You MUST create a new branch named `feature/{first-name}-{last-name}-task-list`.
-* You MUST assign a pull request from your new branch to the original project.
-* The solution must be written in English.
+    class NotificationService {
+        +sendBookingConfirmation(user, booking)
+        +sendCancellationNotice(user, booking)
+    }
+
+    Booking --> Screening
+    Booking --> User
+    Booking --> BookingSeat
+    BookingSeat --> Seat
+    Screening --> Movie
+    Screening --> Room
+```
+
+---
+
+## 3. Sequence Diagram — Reservation
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer
+    participant Auth as AuthService
+    participant ScreenSvc as ScreeningService
+    participant BookingSvc as BookingService
+    participant PaymentGW as PaymentGateway
+    participant DB as Database
+    participant Notify as NotificationService
+
+    Customer->>ScreenSvc: search(title, date)
+    ScreenSvc->>DB: query screenings
+    DB-->>ScreenSvc: screenings list
+    ScreenSvc-->>Customer: present screenings
+
+    Customer->>BookingSvc: createBooking(screeningId, seatIds)
+    BookingSvc->>DB: hold seats (PENDING)
+    DB-->>BookingSvc: bookingId
+    BookingSvc-->>Customer: return bookingId
+
+    Customer->>PaymentGW: pay(paymentDetails)
+    PaymentGW-->>BookingSvc: payment success
+    BookingSvc->>DB: confirm booking
+    BookingSvc->>Notify: send confirmation
+    Notify-->>Customer: booking confirmation
+```
+
+---
+
+## 4. Sequence Diagram — Cancel a Reservation
+
+```mermaid
+sequenceDiagram
+    participant Customer as Customer
+    participant Auth as AuthService
+    participant BookingSvc as BookingService
+    participant DB as Database
+    participant PaymentGW as PaymentGateway
+    participant Notify as NotificationService
+
+    Customer->>Auth: authenticate()
+    Customer->>BookingSvc: requestCancel(bookingId)
+    BookingSvc->>DB: fetch booking
+    DB-->>BookingSvc: booking details
+
+    alt refundable
+        BookingSvc->>PaymentGW: refund(paymentId)
+        PaymentGW-->>BookingSvc: refund success
+        BookingSvc->>DB: set CANCELLED + RELEASED
+        BookingSvc->>Notify: send cancellation notice
+        Notify-->>Customer: cancellation confirmation
+    else non-refundable
+        BookingSvc->>DB: set CANCELLED
+        BookingSvc->>Notify: send notice
+        Notify-->>Customer: cancellation without refund
+    end
+```
+
+---
+
+## 5. State Diagrams
+
+### 5.1 Booking
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> CONFIRMED : payment success
+    PENDING --> CANCELLED : payment failed / user cancel
+    PENDING --> EXPIRED : hold expired
+
+    CONFIRMED --> CANCELLED : cancellation
+    CONFIRMED --> REFUNDED : refund issued
+    CONFIRMED --> COMPLETED : show ended
+
+    CANCELLED --> [*]
+    REFUNDED --> [*]
+    EXPIRED --> [*]
+    COMPLETED --> [*]
+```
+
+### 5.2 Seat Hold
+
+```mermaid
+stateDiagram-v2
+    [*] --> AVAILABLE
+    AVAILABLE --> HELD : holdSeats()
+    HELD --> CONFIRMED : booking confirmed
+    HELD --> RELEASED : cancel or expire
+    RELEASED --> AVAILABLE
+```
+
+### 5.3 Screening
+
+```mermaid
+stateDiagram-v2
+    [*] --> SCHEDULED
+    SCHEDULED --> IN_PROGRESS : show_start
+    IN_PROGRESS --> COMPLETED : show_end
+    SCHEDULED --> CANCELLED : admin cancel
+    IN_PROGRESS --> CANCELLED : emergency cancel
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+```
+
+---
+
+## 6. Technical Considerations
+
+* **Concurrency Control:** Seats locked via DB transactions and UNIQUE constraints `(screening_id, seat_id)`.
+* **Performance:** Cache read-heavy data (screenings, seat maps). Scale horizontally at peak demand.
+* **Resilience:** Automatic seat release after TTL expiration for unconfirmed bookings.
+* **Security:** JWT-based auth, password hashing, PCI-compliant payments.
+* **Monitoring:** Metrics for bookings, expirations, payment failures.
+
+---
