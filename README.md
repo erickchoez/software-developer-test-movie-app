@@ -1,4 +1,4 @@
-# Cinema Booking System — Design Documentation
+# Cinema Booking System
 
 This document contains the deliverables for the **Software Developer Design Test**. The design is using **Mermaid** diagrams.
 
