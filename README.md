@@ -4,7 +4,7 @@ This document contains the deliverables for the **Software Developer Design Test
 
 ---
 
-## 1. Entity-Relationship Diagram
+## Entity-Relationship Diagram
 
 ```mermaid
 erDiagram
@@ -97,7 +97,7 @@ erDiagram
 
 ---
 
-## 2. Class Design
+## Class Design
 
 ```mermaid
 classDiagram
@@ -224,7 +224,7 @@ classDiagram
 
 ---
 
-## 3. Sequence Diagram — Reservation
+## Sequence Diagram — Reservation
 
 ```mermaid
 sequenceDiagram
@@ -255,7 +255,7 @@ sequenceDiagram
 
 ---
 
-## 4. Sequence Diagram — Cancel a Reservation
+## Sequence Diagram — Cancel a Reservation
 
 ```mermaid
 sequenceDiagram
@@ -286,9 +286,9 @@ sequenceDiagram
 
 ---
 
-## 5. State Diagrams
+## State Diagrams
 
-### 5.1 Booking
+### Booking
 
 ```mermaid
 stateDiagram-v2
@@ -307,7 +307,7 @@ stateDiagram-v2
     COMPLETED --> [*]
 ```
 
-### 5.2 Seat Hold
+### Seat Hold
 
 ```mermaid
 stateDiagram-v2
@@ -318,7 +318,7 @@ stateDiagram-v2
     RELEASED --> AVAILABLE
 ```
 
-### 5.3 Screening
+### Screening
 
 ```mermaid
 stateDiagram-v2
@@ -330,15 +330,5 @@ stateDiagram-v2
     COMPLETED --> [*]
     CANCELLED --> [*]
 ```
-
----
-
-## 6. Technical Considerations
-
-* **Concurrency Control:** Seats locked via DB transactions and UNIQUE constraints `(screening_id, seat_id)`.
-* **Performance:** Cache read-heavy data (screenings, seat maps). Scale horizontally at peak demand.
-* **Resilience:** Automatic seat release after TTL expiration for unconfirmed bookings.
-* **Security:** JWT-based auth, password hashing, PCI-compliant payments.
-* **Monitoring:** Metrics for bookings, expirations, payment failures.
 
 ---
