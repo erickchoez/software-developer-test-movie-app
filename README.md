@@ -1,10 +1,10 @@
-# Cinema Booking System — Design Documentation
+# Cinema Booking System 
 
-This document contains the deliverables for the **Software Developer Design Test**. The design is presented in English, using **Mermaid** diagrams.
+This document contains the deliverables for the **Software Developer Design Test**. The design is using **Mermaid** diagrams.
 
 ---
 
-## 1. Entity-Relationship Diagram (ERD)
+## 1. Entity-Relationship Diagram
 
 ```mermaid
 erDiagram
