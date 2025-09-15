@@ -1,10 +1,10 @@
-# Cinema Booking System 
+# Cinema Booking System — Design Documentation
 
-This document contains the deliverables for the **Software Developer Design Test**. The design is using **Mermaid** diagrams.
+This document contains the deliverables for the **Software Developer Design Test**. The design is presented in English, using **Mermaid** diagrams.
 
 ---
 
-## Entity-Relationship Diagram
+## 1. Entity-Relationship Diagram (ERD)
 
 ```mermaid
 erDiagram
@@ -97,7 +97,7 @@ erDiagram
 
 ---
 
-## Class Design
+## 2. Class Design
 
 ```mermaid
 classDiagram
@@ -224,11 +224,11 @@ classDiagram
 
 ---
 
-## Sequence Diagram — Reservation
+## 3. Sequence Diagram — Reservation
 
 ```mermaid
 sequenceDiagram
-    participant Customer as Customer
+    actor User as User
     participant Auth as AuthService
     participant ScreenSvc as ScreeningService
     participant BookingSvc as BookingService
@@ -236,38 +236,38 @@ sequenceDiagram
     participant DB as Database
     participant Notify as NotificationService
 
-    Customer->>ScreenSvc: search(title, date)
+    User->>ScreenSvc: search(title, date)
     ScreenSvc->>DB: query screenings
     DB-->>ScreenSvc: screenings list
-    ScreenSvc-->>Customer: present screenings
+    ScreenSvc-->>User: present screenings
 
-    Customer->>BookingSvc: createBooking(screeningId, seatIds)
+    User->>BookingSvc: createBooking(screeningId, seatIds)
     BookingSvc->>DB: hold seats (PENDING)
     DB-->>BookingSvc: bookingId
-    BookingSvc-->>Customer: return bookingId
+    BookingSvc-->>User: return bookingId
 
-    Customer->>PaymentGW: pay(paymentDetails)
+    User->>PaymentGW: pay(paymentDetails)
     PaymentGW-->>BookingSvc: payment success
     BookingSvc->>DB: confirm booking
     BookingSvc->>Notify: send confirmation
-    Notify-->>Customer: booking confirmation
+    Notify-->>User: booking confirmation
 ```
 
 ---
 
-## Sequence Diagram — Cancel a Reservation
+## 4. Sequence Diagram — Cancel a Reservation
 
 ```mermaid
 sequenceDiagram
-    participant Customer as Customer
+    actor User as User
     participant Auth as AuthService
     participant BookingSvc as BookingService
     participant DB as Database
     participant PaymentGW as PaymentGateway
     participant Notify as NotificationService
 
-    Customer->>Auth: authenticate()
-    Customer->>BookingSvc: requestCancel(bookingId)
+    User->>Auth: authenticate()
+    User->>BookingSvc: requestCancel(bookingId)
     BookingSvc->>DB: fetch booking
     DB-->>BookingSvc: booking details
 
@@ -276,19 +276,19 @@ sequenceDiagram
         PaymentGW-->>BookingSvc: refund success
         BookingSvc->>DB: set CANCELLED + RELEASED
         BookingSvc->>Notify: send cancellation notice
-        Notify-->>Customer: cancellation confirmation
+        Notify-->>User: cancellation confirmation
     else non-refundable
         BookingSvc->>DB: set CANCELLED
         BookingSvc->>Notify: send notice
-        Notify-->>Customer: cancellation without refund
+        Notify-->>User: cancellation without refund
     end
 ```
 
 ---
 
-## State Diagrams
+## 5. State Diagrams
 
-### Booking
+### 5.1 Booking
 
 ```mermaid
 stateDiagram-v2
@@ -307,7 +307,7 @@ stateDiagram-v2
     COMPLETED --> [*]
 ```
 
-### Seat Hold
+### 5.2 Seat Hold
 
 ```mermaid
 stateDiagram-v2
@@ -318,7 +318,7 @@ stateDiagram-v2
     RELEASED --> AVAILABLE
 ```
 
-### Screening
+### 5.3 Screening
 
 ```mermaid
 stateDiagram-v2
@@ -330,5 +330,15 @@ stateDiagram-v2
     COMPLETED --> [*]
     CANCELLED --> [*]
 ```
+
+---
+
+## 6. Technical Considerations
+
+* **Concurrency Control:** Seats locked via DB transactions and UNIQUE constraints `(screening_id, seat_id)`.
+* **Performance:** Cache read-heavy data (screenings, seat maps). Scale horizontally at peak demand.
+* **Resilience:** Automatic seat release after TTL expiration for unconfirmed bookings.
+* **Security:** JWT-based auth, password hashing, PCI-compliant payments.
+* **Monitoring:** Metrics for bookings, expirations, payment failures.
 
 ---
